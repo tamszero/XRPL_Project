@@ -1,6 +1,6 @@
 from xrpl.clients import JsonRpcClient
 from xrpl.models.transactions import Payment
-from xrpl.models.memos import Memo, MemoData
+from xrpl.models.transactions import Memo
 from xrpl.wallet import Wallet
 from xrpl.transaction import submit_and_wait
 import json

@@ -257,8 +257,8 @@ export default function SettingsScreen() {
           <Text className="text-xs text-muted">{isEn ? 'Choose app display language' : '앱 화면 언어를 선택하세요'}</Text>
           <View className="flex-row gap-2">
             {([
-              { key: 'ko' as const, label: '한국어' },
-              { key: 'en' as const, label: 'English' },
+              { key: 'ko', label: 'KR' },
+              { key: 'en', label: 'EN' },
             ] as const).map((item) => (
               <TouchableOpacity
                 key={item.key}

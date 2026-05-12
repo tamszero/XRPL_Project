@@ -104,16 +104,6 @@ export interface DutchPayInfo {
   per_person_local: number;
 }
 
-export type ExpenseCategoryId =
-  | 'food'
-  | 'transport'
-  | 'housing'
-  | 'study'
-  | 'shopping'
-  | 'health'
-  | 'transfer'
-  | 'other';
-
 export interface ReceiptAnalysisResult {
   merchant_name: string;
   items: ReceiptItem[];
@@ -127,8 +117,6 @@ export interface ReceiptAnalysisResult {
   date?: string;
   time?: string;
   error?: string;
-  /** 사용자가 저장 시 선택한 지출 분류 (분류 규칙과 동일한 카테고리 id) */
-  category?: ExpenseCategoryId;
 }
 
 // 메뉴판 분석 결과

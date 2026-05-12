@@ -1,14 +1,14 @@
-import { useState } from "react";
-import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
-
+import { ScrollView, Text, View, TouchableOpacity, TextInput, FlatList, Alert } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useDutchPay } from "@/hooks/useDutchPay";
 import { useSettings } from "@/hooks/useSettings";
+import { useState } from "react";
 
 export default function DutchPayScreen() {
   const { members, totalAmount, addMember, removeMember, updateMemberPaid, setTotal, calculateSettlement, reset } = useDutchPay();
   const { settings } = useSettings();
-  const isEn = settings.language === "en";
+  const isEn = settings?.language === "en";
+
   const [newMemberName, setNewMemberName] = useState("");
   const [totalInput, setTotalInput] = useState("");
   const [settlement, setSettlement] = useState<ReturnType<typeof calculateSettlement> | null>(null);
@@ -77,17 +77,13 @@ export default function DutchPayScreen() {
             </TouchableOpacity>
           </View>
           {totalAmount > 0 && (
-            <Text className="text-sm text-success">
-              ✓ {isEn ? "Total" : "총액"}: ₩{totalAmount.toLocaleString()}
-            </Text>
+            <Text className="text-sm text-success">✓ {isEn ? "Total" : "총액"}: ₩{totalAmount.toLocaleString()}</Text>
           )}
         </View>
 
         {/* 인원 추가 */}
         <View className="gap-3">
-          <Text className="text-lg font-semibold text-foreground">
-            {isEn ? `Members (${members.length})` : `참가자 (${members.length}명)`}
-          </Text>
+          <Text className="text-lg font-semibold text-foreground">{isEn ? `Members (${members.length})` : `참가자 (${members.length}명)`}</Text>
           <View className="flex-row gap-2">
             <TextInput
               value={newMemberName}
@@ -123,7 +119,10 @@ export default function DutchPayScreen() {
                     </View>
                   </View>
                 </View>
-                <TouchableOpacity onPress={() => removeMember(index)} className="p-2 bg-error rounded-lg ml-2">
+                <TouchableOpacity
+                  onPress={() => removeMember(index)}
+                  className="p-2 bg-error rounded-lg ml-2"
+                >
                   <Text className="text-background font-bold">×</Text>
                 </TouchableOpacity>
               </View>
@@ -146,7 +145,9 @@ export default function DutchPayScreen() {
             {/* 1인당 금액 */}
             <View className="p-4 bg-primary rounded-lg">
               <Text className="text-sm text-background">{isEn ? "Per person" : "1인당 부담액"}</Text>
-              <Text className="text-3xl font-bold text-background mt-1">₩{Math.round(settlement.per_person).toLocaleString()}</Text>
+              <Text className="text-3xl font-bold text-background mt-1">
+                ₩{Math.round(settlement.per_person).toLocaleString()}
+              </Text>
             </View>
 
             {/* 정산 내역 */}
@@ -160,7 +161,9 @@ export default function DutchPayScreen() {
                       {" → "}
                       <Text className="font-bold">{s.to}</Text>
                     </Text>
-                    <Text className="text-lg font-bold text-primary mt-1">₩{Math.round(s.amount).toLocaleString()}</Text>
+                    <Text className="text-lg font-bold text-primary mt-1">
+                      ₩{Math.round(s.amount).toLocaleString()}
+                    </Text>
                   </View>
                 ))}
               </View>

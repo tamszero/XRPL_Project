@@ -1,25 +1,51 @@
+"""
+거래 내역 모델
+"""
 import uuid
 from datetime import datetime
-from decimal import Decimal
-
-from sqlalchemy import String, DateTime, ForeignKey, Numeric, Text, func
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from sqlalchemy import Column, String, Float, DateTime, Boolean, Text, ForeignKey
 from app.database import Base
 
 
-class XrplTransaction(Base):
-    __tablename__ = "xrpl_transactions"
+class Transaction(Base):
+    __tablename__ = "transactions"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    wallet_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("wallets.id"), nullable=False)
-    tx_type: Mapped[str] = mapped_column(String(30), nullable=False)
-    xrpl_tx_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    status: Mapped[str] = mapped_column(String(20), nullable=False)
-    amount: Mapped[Decimal | None] = mapped_column(Numeric(20, 6))
-    currency: Mapped[str | None] = mapped_column(String(10))
-    memo: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
 
-    wallet: Mapped["Wallet"] = relationship("Wallet", back_populates="transactions")
+    # 거래 기본 정보
+    merchant_name = Column(String, nullable=False)
+    amount_local = Column(Float, nullable=False)
+    currency = Column(String, nullable=False)
+    amount_krw = Column(Float, default=0)
+    exchange_rate = Column(Float, default=0)
+
+    # 카테고리
+    category = Column(String, default="other")
+    category_confidence = Column(Float, default=0)
+    original_category = Column(String, nullable=True)  # 수정 전 카테고리
+
+    # 출처 (receipt / bank_notification / manual)
+    source = Column(String, default="manual")
+
+    # 날짜
+    transaction_date = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # 상세 정보
+    description = Column(Text, nullable=True)
+    items_json = Column(Text, default="[]")  # JSON string
+
+    # 영수증 관련
+    receipt_image_url = Column(String, nullable=True)
+    receipt_ocr_text = Column(Text, nullable=True)
+
+    # 수정 이력
+    is_edited = Column(Boolean, default=False)
+    edited_at = Column(DateTime, nullable=True)
+
+    # XRPL 기록
+    xrpl_recorded = Column(Boolean, default=False)
+    xrpl_tx_hash = Column(String, nullable=True)
+    xrpl_recorded_at = Column(DateTime, nullable=True)

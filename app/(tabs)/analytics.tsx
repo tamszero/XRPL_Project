@@ -16,8 +16,21 @@ import { useColors } from '@/hooks/use-colors';
 
 export default function AnalyticsScreen() {
   const colors = useColors();
-  const { transactions } = useFinance();
-  const { budgets, goals, addBudget, addGoal, getBudgetStatuses, getBudgetAlerts, getEfficiencyScore } = useBudget();
+  
+  // 수정: 데이터가 아직 로드되지 않은 찰나의 순간을 대비해 안전장치(|| {})를 추가했습니다.
+  const financeContext = useFinance() || {};
+  const { transactions = [] } = financeContext;
+
+  const budgetContext = useBudget() || {};
+  const { 
+    budgets = [], 
+    goals = [], 
+    addBudget, 
+    addGoal, 
+    getBudgetStatuses, 
+    getBudgetAlerts, 
+    getEfficiencyScore 
+  } = budgetContext;
 
   const [activeTab, setActiveTab] = useState<'budget' | 'trends' | 'goals'>('budget');
   const [showBudgetModal, setShowBudgetModal] = useState(false);
@@ -27,12 +40,13 @@ export default function AnalyticsScreen() {
   const [goalAmount, setGoalAmount] = useState('');
   const [goalType, setGoalType] = useState<'reduction' | 'limit'>('limit');
 
-  const budgetStatuses = getBudgetStatuses(transactions);
-  const budgetAlerts = getBudgetAlerts(transactions);
-  const efficiencyScore = getEfficiencyScore(transactions);
+  // 수정: 함수가 아직 준비되지 않았을 경우를 대비해 옵셔널 체이닝(?.)과 기본값(|| [])을 추가했습니다.
+  const budgetStatuses = getBudgetStatuses?.(transactions) || [];
+  const budgetAlerts = getBudgetAlerts?.(transactions) || [];
+  const efficiencyScore = getEfficiencyScore?.(transactions) || 0;
 
   const handleAddBudget = () => {
-    if (budgetAmount && selectedCategory) {
+    if (budgetAmount && selectedCategory && addBudget) {
       const today = new Date();
       const monthYear = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
       addBudget(selectedCategory as any, monthYear, parseFloat(budgetAmount));
@@ -42,7 +56,7 @@ export default function AnalyticsScreen() {
   };
 
   const handleAddGoal = () => {
-    if (goalAmount && selectedCategory) {
+    if (goalAmount && selectedCategory && addGoal) {
       const targetDate = new Date();
       targetDate.setMonth(targetDate.getMonth() + 1);
       addGoal(selectedCategory as any, goalType, parseFloat(goalAmount), targetDate.toISOString().slice(0, 10));

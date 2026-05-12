@@ -13,8 +13,9 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const bottomPadding = Platform.OS === 'web' ? 12 : Math.max(insets.bottom, 10);
   const tabBarHeight = 62 + bottomPadding;
-  const isEn = settings.language === 'en';
-
+  
+  // 수정된 부분: settings 뒤에 물음표(?)를 붙여서 앱이 튕기는 것을 방지합니다.
+  const isEn = settings?.language === 'en';
 
   return (
     <Tabs
@@ -34,7 +35,6 @@ export default function TabLayout() {
         },
       }}
     >
-
       <Tabs.Screen name="index" options={{ title: isEn ? 'Home' : '홈', tabBarIcon: ({ color }) => <IconSymbol size={26} name="house.fill" color={color} /> }} />
       <Tabs.Screen name="records" options={{ title: isEn ? 'Records' : '기록', tabBarIcon: ({ color }) => <IconSymbol size={26} name="list.bullet.rectangle.fill" color={color} /> }} />
       <Tabs.Screen name="receipt-scanner" options={{ title: isEn ? 'Receipt' : '영수증', tabBarIcon: ({ color }) => <IconSymbol size={26} name="doc.text.image.fill" color={color} /> }} />
@@ -45,7 +45,6 @@ export default function TabLayout() {
       <Tabs.Screen name="dutch-pay" options={{ href: null }} />
       <Tabs.Screen name="rules" options={{ href: null }} />
       <Tabs.Screen name="report" options={{ href: null }} />
-      <Tabs.Screen name="analytics" options={{ href: null }} />
     </Tabs>
   );
 }

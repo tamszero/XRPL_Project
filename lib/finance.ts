@@ -1,4 +1,4 @@
-import { COUNTRY_CONFIGS, Currency, Language, ReceiptAnalysisResult } from '@/types';
+import { COUNTRY_CONFIGS, Currency } from '@/types';
 
 export type CategoryId = 'food' | 'transport' | 'housing' | 'study' | 'shopping' | 'health' | 'transfer' | 'other';
 
@@ -17,7 +17,7 @@ export type Transaction = {
   category: CategoryId;
   confidence: number;
   date: string;
-  source: 'notification' | 'manual' | 'sample' | 'receipt';
+  source: 'notification' | 'manual' | 'sample';
   rawText: string;
   hash: string;
 };
@@ -86,25 +86,6 @@ export const defaultRules: CategorizationRule[] = [
 
 export function getCategory(id: CategoryId) {
   return categories.find((category) => category.id === id) ?? categories[categories.length - 1];
-}
-
-const CATEGORY_LABEL_EN: Record<CategoryId, string> = {
-  food: 'Food',
-  transport: 'Transport',
-  housing: 'Housing',
-  study: 'Study',
-  shopping: 'Shopping',
-  health: 'Health',
-  transfer: 'Transfer',
-  other: 'Other',
-};
-
-/** 설정 언어에 맞는 지출 분류 표시명 (사용자가 입력한 상호명 등은 변경하지 않음). */
-export function getCategoryUiLabel(id: CategoryId, language: Language): string {
-  if (language === 'en') {
-    return CATEGORY_LABEL_EN[id] ?? id;
-  }
-  return getCategory(id).label;
 }
 
 export function categorizeMerchant(text: string, customRules?: CategorizationRule[]): { category: CategoryId; confidence: number; matchedKeyword?: string; ruleId?: string } {
@@ -185,73 +166,6 @@ export function createTransaction(rawText: string, source: Transaction['source']
   };
 }
 
-/** AsyncStorage에 저장된 영수증(receipt)을 대시보드·분석용 Transaction으로 변환 (금액은 원화 합계 기준). */
-export function transactionFromSavedReceipt(
-  savedId: string,
-  data: ReceiptAnalysisResult,
-  savedAtIso: string,
-  customRules?: CategorizationRule[],
-): Transaction {
-  const merchant = (data.merchant_name ?? '').trim() || 'Receipt';
-  const rawCat = data.category;
-  const hasValidCategory = rawCat !== undefined && rawCat !== null && categories.some((c) => c.id === rawCat);
-  const category: CategoryId = hasValidCategory
-    ? (rawCat as CategoryId)
-    : categorizeMerchant(merchant, customRules).category;
-  const date =
-    data.date && /^\d{4}-\d{2}-\d{2}/.test(data.date) ? data.date.slice(0, 10) : savedAtIso.slice(0, 10);
-  const amountKrw = Math.round(Number.isFinite(data.total_krw) ? data.total_krw : 0);
-  const seed = `${savedId}-${merchant}-${amountKrw}-${date}`;
-  return {
-    id: savedId,
-    merchant,
-    amount: amountKrw,
-    currency: 'KRW',
-    category,
-    confidence: 1,
-    date,
-    source: 'receipt',
-    rawText: `[영수증] ${merchant} ₩${amountKrw.toLocaleString('ko-KR')}`,
-    hash: `XRPL-${hashSeed(seed).toUpperCase().slice(0, 18)}`,
-  };
-}
-
-/** records 화면 등에서 영수증 저장본을 수정할 때 사용 (원화 총액 기준으로 현지 금액·더치페이 재계산). */
-export function applyEditsToReceiptData(
-  prev: ReceiptAnalysisResult,
-  merchant: string,
-  totalKrw: number,
-  category: CategoryId,
-  date: string,
-): ReceiptAnalysisResult {
-  const currency = prev.currency;
-  const rate =
-    typeof prev.exchange_rate === "number" && prev.exchange_rate > 0
-      ? prev.exchange_rate
-      : COUNTRY_CONFIGS[currency]?.exchangeRate ?? 1300;
-  const numPeople = prev.dutch_pay?.num_people && prev.dutch_pay.num_people > 0 ? prev.dutch_pay.num_people : 1;
-  const totalKrwRounded = Math.round(Number.isFinite(totalKrw) ? totalKrw : 0);
-  const totalLocal =
-    currency === "KRW"
-      ? totalKrwRounded
-      : Math.round((totalKrwRounded / rate) * 100) / 100;
-  return {
-    ...prev,
-    merchant_name: merchant.trim() || prev.merchant_name,
-    total_krw: totalKrwRounded,
-    total_local: totalLocal,
-    currency,
-    exchange_rate: currency === "KRW" ? 1 : rate,
-    category,
-    date,
-    dutch_pay: {
-      num_people: numPeople,
-      per_person_krw: Math.round(totalKrwRounded / numPeople),
-      per_person_local: Math.round((totalLocal / numPeople) * 100) / 100,
-    },
-  };
-}
-
 export function createRule(name: string, category: CategoryId, pattern: string, matchType: 'keyword' | 'regex' = 'keyword', priority = 5): CategorizationRule {
   const id = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
   return {
@@ -317,24 +231,6 @@ export function convertToKrw(amount: number, currency: string) {
   if (currency === 'KRW') return amount;
   const rate = COUNTRY_CONFIGS[currency as Currency]?.exchangeRate ?? 1;
   return amount * rate;
-}
-
-/** 해당 월 거래만 원화로 합산 (홈·리포트 총액 동일 기준). */
-export function totalSpendingKrwForMonth(transactions: Transaction[], year: number, month: number): number {
-  return transactions
-    .filter((tx) => {
-      const parsed = new Date(tx.date);
-      if (Number.isNaN(parsed.getTime())) return false;
-      return parsed.getFullYear() === year && parsed.getMonth() === month;
-    })
-    .reduce((sum, tx) => sum + convertToKrw(tx.amount, tx.currency), 0);
-}
-
-/** 원화 합계를 표시 통화 금액으로 변환 (COUNTRY_CONFIGS 환율). */
-export function krwToDisplayCurrency(amountKrw: number, displayCurrency: string): number {
-  if (displayCurrency === 'KRW') return amountKrw;
-  const rate = COUNTRY_CONFIGS[displayCurrency as Currency]?.exchangeRate ?? 1;
-  return amountKrw / rate;
 }
 
 function normalizeCurrency(input?: string) {
