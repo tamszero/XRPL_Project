@@ -35,7 +35,7 @@ backend/
 ├── models.py              # SQLAlchemy ORM 모델
 ├── schemas.py             # Pydantic 스키마 (요청/응답)
 ├── database.py            # 데이터베이스 연결 및 세션
-├── gemini_service.py      # Gemini AI 연동 모듈
+├── service.py             연동 모듈
 ├── xrpl_service.py        # XRPL 블록체인 연동 모듈
 ├── requirements.txt       # Python 의존성
 └── README.md             # 이 파일
