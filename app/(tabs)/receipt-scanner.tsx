@@ -249,7 +249,7 @@ export default function ReceiptScannerScreen() {
         </View>
 
         <View className="gap-3">
-          <Text className="text-base font-semibold text-foreground">{isEn ? "Photo (optional)" : "사진으로 분석 (선택)"}</Text>
+          <Text className="text-base font-semibold text-foreground">{isEn ? "Take a Photo" : "사진으로 분석 (선택)"}</Text>
 
 
           <View className="gap-3">
@@ -292,7 +292,7 @@ export default function ReceiptScannerScreen() {
 
         <View className="rounded-2xl bg-surface/80 border border-border px-4 py-3 flex-row items-center justify-between">
           <View>
-            <Text className="text-xs text-muted">{isEn ? "Profile" : "프로필"}</Text>
+            <Text className="text-xs text-muted">{isEn ? "Current" : "현재 선택"}</Text>
             <Text className="text-sm font-semibold text-foreground">
               {settings.selectedCountry} · {settings.selectedCurrency}
             </Text>
