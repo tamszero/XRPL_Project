@@ -457,12 +457,6 @@ export default function RecordsScreen() {
                         <Text className="text-xs text-muted leading-5">{detailTx.rawText}</Text>
                       </View>
                     ) : null}
-                    <View className="gap-1">
-                      <Text className="text-xs font-semibold text-muted uppercase">{isEn ? 'Reference' : '참조'}</Text>
-                      <Text className="text-xs text-muted font-mono" selectable>
-                        {detailTx.hash}
-                      </Text>
-                    </View>
                   </View>
                 )}
               </ScrollView>
