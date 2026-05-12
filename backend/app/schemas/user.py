@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class UserCreate(BaseModel):
     name: str
     email: str
+    password: str
     phone: str | None = None
 
 
@@ -18,3 +19,15 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class WalletLookupRequest(BaseModel):
+    email: str
+    password: str
+
+
+class UserWithWalletResponse(BaseModel):
+    user_id: uuid.UUID
+    wallet_id: uuid.UUID
+    xrpl_address: str
+    name: str

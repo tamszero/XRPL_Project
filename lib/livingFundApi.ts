@@ -64,10 +64,10 @@ async function req<T>(baseUrl: string, path: string, options: RequestInit = {}):
 export const livingFundApi = (baseUrl: string) => ({
 
   /** 유저 생성 */
-  createUser: (name: string, email: string, phone?: string) =>
+  createUser: (name: string, email: string, password: string, phone?: string) =>
     req<UserInfo>(baseUrl, '/api/users/', {
       method: 'POST',
-      body: JSON.stringify({ name, email, phone }),
+      body: JSON.stringify({ name, email, password, phone }),
     }),
 
   /** XRPL 지갑 생성 (faucet + USD/EUR/KRW TrustLine, 15~30초 소요) */
@@ -121,4 +121,12 @@ export const livingFundApi = (baseUrl: string) => ({
   /** 트랜잭션 내역 조회 */
   getTransactions: (walletId: string) =>
     req<TxRecord[]>(baseUrl, `/api/transactions/wallet/${walletId}`),
+
+  /** 이메일+비밀번호로 기존 유저+지갑 조회 */
+  lookupWalletByEmail: (email: string, password: string) =>
+    req<{ user_id: string; wallet_id: string; xrpl_address: string; name: string }>(
+      baseUrl,
+      `/api/users/lookup`,
+      { method: 'POST', body: JSON.stringify({ email, password }) },
+    ),
 });
