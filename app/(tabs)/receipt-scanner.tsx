@@ -21,7 +21,8 @@ import { useReceiptScanner } from "@/hooks/useReceiptScanner";
 import { useSettings } from "@/hooks/useSettings";
 import { useTransactionStorage } from "@/hooks/useTransactionStorage";
 import { useXRPL } from "@/hooks/useXRPL";
-import { categories, categorizeMerchant } from "@/lib/finance";
+import { categories, categorizeMerchant, getCategoryUiLabel } from "@/lib/finance";
+import { useFinance } from "@/lib/finance-context";
 import { useRules } from "@/lib/rules-context";
 import type { Currency, ExpenseCategoryId, ReceiptAnalysisResult } from "@/types";
 import { COUNTRY_CONFIGS } from "@/types";
@@ -54,6 +55,8 @@ export default function ReceiptScannerScreen() {
   const { isLoading, error, result, pickImage, takePhoto, analyzeReceipt, clearResult } = useReceiptScanner();
   const { settings } = useSettings();
   const isEn = settings.language === "en";
+  const locale = settings.language === "en" ? "en-US" : "ko-KR";
+  const { addReceiptTransaction } = useFinance();
   const { rules } = useRules();
   const { saveTransaction, updateTransactionXRPL } = useTransactionStorage();
   const { recordTransaction, isLoading: isXRPLLoading } = useXRPL();
@@ -161,6 +164,7 @@ export default function ReceiptScannerScreen() {
     try {
       const payload = { ...data, category: selectedCategory };
       const tx = await saveTransaction("receipt", payload);
+      addReceiptTransaction(tx);
       setSavedTxId(tx.id);
       setXrplReceipt(payload as ReceiptAnalysisResult);
       Alert.alert(isEn ? "Success" : "성공", isEn ? "Receipt saved" : "영수증이 저장되었습니다");
@@ -216,9 +220,6 @@ export default function ReceiptScannerScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 28 }} showsVerticalScrollIndicator={false} className="gap-5">
         <View className="gap-1 pt-2">
           <Text className="text-3xl font-bold text-foreground tracking-tight">{isEn ? "Receipts" : "영수증"}</Text>
-          <Text className="text-sm text-muted leading-5">
-            {isEn ? "Add a payment in seconds, or try a photo when your backend is ready." : "몇 초 만에 입력하거나, 백엔드가 준비되면 사진으로 시도해 보세요."}
-          </Text>
         </View>
 
         {/* 직접 입력 — 사진 블록 위 메인 CTA */}
@@ -249,9 +250,7 @@ export default function ReceiptScannerScreen() {
 
         <View className="gap-3">
           <Text className="text-base font-semibold text-foreground">{isEn ? "Photo (optional)" : "사진으로 분석 (선택)"}</Text>
-          <Text className="text-xs text-muted leading-5">
-            {isEn ? "Needs FastAPI, GEMINI_API_KEY, and a reachable URL from this device." : "FastAPI, GEMINI_API_KEY, 이 기기에서 접속 가능한 백엔드 URL이 필요합니다."}
-          </Text>
+
 
           <View className="gap-3">
             <TouchableOpacity
@@ -299,7 +298,7 @@ export default function ReceiptScannerScreen() {
             </Text>
           </View>
           <Text className="text-xs text-muted text-right max-w-[55%]">
-            1 {settings.selectedCurrency} ≈ ₩{Math.round(rateHint).toLocaleString()}
+            1 {settings.selectedCurrency} ≈ ₩{Math.round(rateHint).toLocaleString(locale)}
           </Text>
         </View>
 
@@ -322,7 +321,7 @@ export default function ReceiptScannerScreen() {
                 </Text>
                 <Text className="text-base font-semibold text-foreground">{xrplReceipt.merchant_name}</Text>
                 <Text className="text-sm text-muted">
-                  {xrplReceipt.total_local.toFixed(2)} {xrplReceipt.currency} → ₩{xrplReceipt.total_krw.toLocaleString()}
+                  {xrplReceipt.total_local.toFixed(2)} {xrplReceipt.currency} → ₩{xrplReceipt.total_krw.toLocaleString(locale)}
                 </Text>
               </View>
             </View>
@@ -363,14 +362,14 @@ export default function ReceiptScannerScreen() {
               </View>
               <View className="flex-1 rounded-2xl bg-primary p-4">
                 <Text className="text-xs text-white/80">{isEn ? "KRW" : "원화"}</Text>
-                <Text className="text-xl font-bold text-white mt-1">₩{result.total_krw.toLocaleString()}</Text>
+                <Text className="text-xl font-bold text-white mt-1">₩{result.total_krw.toLocaleString(locale)}</Text>
               </View>
             </View>
 
             <View className="rounded-2xl bg-surface border border-border px-4 py-3">
               <Text className="text-xs text-muted">{isEn ? "Rate used" : "적용 환율"}</Text>
               <Text className="text-sm font-medium text-foreground mt-1">
-                1 {result.currency} = ₩{result.exchange_rate.toLocaleString()}
+                1 {result.currency} = ₩{result.exchange_rate.toLocaleString(locale)}
               </Text>
             </View>
 
@@ -385,7 +384,7 @@ export default function ReceiptScannerScreen() {
                       onPress={() => setSelectedCategory(cat.id as ExpenseCategoryId)}
                       className={`mr-2 rounded-full px-4 py-2 border ${active ? "border-primary bg-primary/10" : "border-border bg-background"}`}
                     >
-                      <Text className={`text-sm font-semibold ${active ? "text-primary" : "text-foreground"}`}>{cat.label}</Text>
+                      <Text className={`text-sm font-semibold ${active ? "text-primary" : "text-foreground"}`}>{getCategoryUiLabel(cat.id, settings.language)}</Text>
                     </Pressable>
                   );
                 })}
@@ -412,7 +411,7 @@ export default function ReceiptScannerScreen() {
               <View className="mt-3 gap-2">
                 <View className="flex-row justify-between">
                   <Text className="text-white/85 text-sm">{isEn ? "Per person (KRW)" : "1인당 (원화)"}</Text>
-                  <Text className="text-white font-bold">₩{result.dutch_pay.per_person_krw.toLocaleString()}</Text>
+                  <Text className="text-white font-bold">₩{result.dutch_pay.per_person_krw.toLocaleString(locale)}</Text>
                 </View>
               </View>
             </View>
@@ -520,7 +519,7 @@ export default function ReceiptScannerScreen() {
                     </Text>
                   </View>
                   <View className="rounded-xl bg-primary/10 px-3 py-2 self-start">
-                    <Text className="text-primary font-bold">≈ ₩{manualReceipt.total_krw.toLocaleString()}</Text>
+                    <Text className="text-primary font-bold">≈ ₩{manualReceipt.total_krw.toLocaleString(locale)}</Text>
                   </View>
                 </View>
               )}
@@ -540,7 +539,7 @@ export default function ReceiptScannerScreen() {
                         hitSlop={{ top: 4, bottom: 4 }}
                         className={`rounded-full px-5 py-3.5 border-2 ${active ? "border-primary bg-primary/10" : "border-border bg-background"}`}
                       >
-                        <Text className={`text-sm font-semibold ${active ? "text-primary" : "text-foreground"}`}>{cat.label}</Text>
+                        <Text className={`text-sm font-semibold ${active ? "text-primary" : "text-foreground"}`}>{getCategoryUiLabel(cat.id, settings.language)}</Text>
                       </Pressable>
                     );
                   })}

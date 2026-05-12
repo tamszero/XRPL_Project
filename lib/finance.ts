@@ -1,4 +1,4 @@
-import { COUNTRY_CONFIGS, Currency, ReceiptAnalysisResult } from '@/types';
+import { COUNTRY_CONFIGS, Currency, Language, ReceiptAnalysisResult } from '@/types';
 
 export type CategoryId = 'food' | 'transport' | 'housing' | 'study' | 'shopping' | 'health' | 'transfer' | 'other';
 
@@ -86,6 +86,25 @@ export const defaultRules: CategorizationRule[] = [
 
 export function getCategory(id: CategoryId) {
   return categories.find((category) => category.id === id) ?? categories[categories.length - 1];
+}
+
+const CATEGORY_LABEL_EN: Record<CategoryId, string> = {
+  food: 'Food',
+  transport: 'Transport',
+  housing: 'Housing',
+  study: 'Study',
+  shopping: 'Shopping',
+  health: 'Health',
+  transfer: 'Transfer',
+  other: 'Other',
+};
+
+/** 설정 언어에 맞는 지출 분류 표시명 (사용자가 입력한 상호명 등은 변경하지 않음). */
+export function getCategoryUiLabel(id: CategoryId, language: Language): string {
+  if (language === 'en') {
+    return CATEGORY_LABEL_EN[id] ?? id;
+  }
+  return getCategory(id).label;
 }
 
 export function categorizeMerchant(text: string, customRules?: CategorizationRule[]): { category: CategoryId; confidence: number; matchedKeyword?: string; ruleId?: string } {
