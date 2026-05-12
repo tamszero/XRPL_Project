@@ -319,6 +319,24 @@ export function convertToKrw(amount: number, currency: string) {
   return amount * rate;
 }
 
+/** 해당 월 거래만 원화로 합산 (홈·리포트 총액 동일 기준). */
+export function totalSpendingKrwForMonth(transactions: Transaction[], year: number, month: number): number {
+  return transactions
+    .filter((tx) => {
+      const parsed = new Date(tx.date);
+      if (Number.isNaN(parsed.getTime())) return false;
+      return parsed.getFullYear() === year && parsed.getMonth() === month;
+    })
+    .reduce((sum, tx) => sum + convertToKrw(tx.amount, tx.currency), 0);
+}
+
+/** 원화 합계를 표시 통화 금액으로 변환 (COUNTRY_CONFIGS 환율). */
+export function krwToDisplayCurrency(amountKrw: number, displayCurrency: string): number {
+  if (displayCurrency === 'KRW') return amountKrw;
+  const rate = COUNTRY_CONFIGS[displayCurrency as Currency]?.exchangeRate ?? 1;
+  return amountKrw / rate;
+}
+
 function normalizeCurrency(input?: string) {
   const value = (input ?? '').toUpperCase();
   if (value === '원') return 'KRW';
