@@ -1,4 +1,4 @@
-import { COUNTRY_CONFIGS, Currency } from '@/types';
+import { COUNTRY_CONFIGS, Currency, ReceiptAnalysisResult } from '@/types';
 
 export type CategoryId = 'food' | 'transport' | 'housing' | 'study' | 'shopping' | 'health' | 'transfer' | 'other';
 
@@ -17,7 +17,7 @@ export type Transaction = {
   category: CategoryId;
   confidence: number;
   date: string;
-  source: 'notification' | 'manual' | 'sample';
+  source: 'notification' | 'manual' | 'sample' | 'receipt';
   rawText: string;
   hash: string;
 };
@@ -162,6 +162,37 @@ export function createTransaction(rawText: string, source: Transaction['source']
     id: hashSeed(seed).slice(0, 12),
     date,
     source,
+    hash: `XRPL-${hashSeed(seed).toUpperCase().slice(0, 18)}`,
+  };
+}
+
+/** AsyncStorage에 저장된 영수증(receipt)을 대시보드·분석용 Transaction으로 변환 (금액은 원화 합계 기준). */
+export function transactionFromSavedReceipt(
+  savedId: string,
+  data: ReceiptAnalysisResult,
+  savedAtIso: string,
+  customRules?: CategorizationRule[],
+): Transaction {
+  const merchant = (data.merchant_name ?? '').trim() || 'Receipt';
+  const rawCat = data.category;
+  const hasValidCategory = rawCat !== undefined && rawCat !== null && categories.some((c) => c.id === rawCat);
+  const category: CategoryId = hasValidCategory
+    ? (rawCat as CategoryId)
+    : categorizeMerchant(merchant, customRules).category;
+  const date =
+    data.date && /^\d{4}-\d{2}-\d{2}/.test(data.date) ? data.date.slice(0, 10) : savedAtIso.slice(0, 10);
+  const amountKrw = Math.round(Number.isFinite(data.total_krw) ? data.total_krw : 0);
+  const seed = `${savedId}-${merchant}-${amountKrw}-${date}`;
+  return {
+    id: savedId,
+    merchant,
+    amount: amountKrw,
+    currency: 'KRW',
+    category,
+    confidence: 1,
+    date,
+    source: 'receipt',
+    rawText: `[영수증] ${merchant} ₩${amountKrw.toLocaleString('ko-KR')}`,
     hash: `XRPL-${hashSeed(seed).toUpperCase().slice(0, 18)}`,
   };
 }
