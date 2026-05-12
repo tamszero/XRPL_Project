@@ -144,11 +144,6 @@ export default function RatesScreen() {
           <TouchableOpacity className="rounded-2xl bg-primary py-4 items-center active:opacity-80">
             <Text className="text-white font-bold">{isEn ? 'Schedule transfer alert' : '송금 알림 예약하기'}</Text>
           </TouchableOpacity>
-          <Text className="text-xs text-muted leading-4 text-center">
-            {isEn
-              ? 'This button is for MVP demo. Real scheduling will be enabled once push notifications and user settings are integrated.'
-              : '현재 버튼은 MVP 시연용입니다. 실제 알림 예약은 운영 단계에서 푸시 알림과 사용자 설정이 연결될 때 활성화됩니다.'}
-          </Text>
         </View>
       </ScrollView>
     </ScreenContainer>

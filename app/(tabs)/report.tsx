@@ -4,9 +4,8 @@ import { CategoryTotalsSection } from '@/components/category-totals-section';
 import { ScreenContainer } from '@/components/screen-container';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useSettings } from '@/hooks/useSettings';
-import { convertToKrw } from '@/lib/finance';
+import { totalSpendingKrwForMonth, krwToDisplayCurrency } from '@/lib/finance';
 import { useFinance } from '@/lib/finance-context';
-import { COUNTRY_CONFIGS } from '@/types';
 
 export default function ReportScreen() {
   const { settings } = useSettings();
@@ -20,11 +19,10 @@ export default function ReportScreen() {
     if (Number.isNaN(parsed.getTime())) return false;
     return parsed.getFullYear() === currentYear && parsed.getMonth() === currentMonth;
   });
-  const total = currentMonthTransactions.reduce((sum, item) => sum + convertToKrw(item.amount, item.currency), 0);
+  const totalKrw = totalSpendingKrwForMonth(transactions, currentYear, currentMonth);
+  const totalInSelectedCurrency = krwToDisplayCurrency(totalKrw, settings.selectedCurrency);
   const verified = currentMonthTransactions.filter((item) => item.confidence >= 0.9).length;
   const locale = isEn ? 'en-US' : 'ko-KR';
-  const targetRate = settings.selectedCurrency === 'KRW' ? 1 : (COUNTRY_CONFIGS[settings.selectedCurrency]?.exchangeRate ?? 1);
-  const totalInSelectedCurrency = total / targetRate;
   const monthLabel = isEn
     ? `Submission summary for ${now.toLocaleString('en-US', { month: 'long', year: 'numeric' })}`
     : `${currentYear}년 ${currentMonth + 1}월 제출용 요약`;

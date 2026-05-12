@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScreenContainer } from '@/components/screen-container';
 import { useFinance } from '@/lib/finance-context';
 import { useRules } from '@/lib/rules-context';
-import { categories, Transaction } from '@/lib/finance';
+import { categories, Transaction, convertToKrw, totalSpendingKrwForMonth, krwToDisplayCurrency } from '@/lib/finance';
 import { setupNotificationListener, requestNotificationPermissions } from '@/lib/notification-handler';
 import { useSettings } from '@/hooks/useSettings';
 import { COUNTRY_CONFIGS } from '@/types';
@@ -14,6 +14,7 @@ export default function HomeScreen() {
   const { rules } = useRules();
   const { settings } = useSettings();
   const isEn = settings.language === 'en';
+  const locale = isEn ? 'en-US' : 'ko-KR';
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [notificationPermission, setNotificationPermission] = useState(false);
 
@@ -80,14 +81,6 @@ export default function HomeScreen() {
     [exchangeRatesByCurrency],
   );
 
-  const formatCurrencyAmount = useCallback((amount: number, currency: string) => {
-    const useFraction = !['KRW', 'JPY'].includes(currency);
-    return amount.toLocaleString('en-US', {
-      minimumFractionDigits: useFraction ? 2 : 0,
-      maximumFractionDigits: useFraction ? 2 : 0,
-    });
-  }, []);
-
   const getCategoryLabel = useCallback(
     (id: string, fallback: string) => {
       if (!isEn) return fallback;
@@ -106,28 +99,37 @@ export default function HomeScreen() {
     [isEn],
   );
 
-  const summary = useMemo(
-    () =>
-      categories
-        .map((category) => {
-          const items = transactions.filter((tx) => {
-            if (tx.category !== category.id) return false;
-            const parsed = new Date(tx.date);
-            if (Number.isNaN(parsed.getTime())) return false;
-            const now = new Date();
-            return parsed.getFullYear() === now.getFullYear() && parsed.getMonth() === now.getMonth();
-          });
-          const amount = items.reduce(
-            (sum, tx) => sum + convertAmount(tx.amount, tx.currency, settings.selectedCurrency),
-            0,
-          );
-          return { category, amount, count: items.length };
-        })
-        .filter((row) => row.count > 0),
-    [transactions, convertAmount, settings.selectedCurrency],
+  const formatRounded = useCallback(
+    (amount: number) => `${Math.round(amount).toLocaleString(locale)}`,
+    [locale],
   );
 
-  const totalAmount = summary.reduce((sum, item) => sum + item.amount, 0);
+  const summary = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    return categories
+      .map((category) => {
+        const items = transactions.filter((tx) => {
+          if (tx.category !== category.id) return false;
+          const parsed = new Date(tx.date);
+          if (Number.isNaN(parsed.getTime())) return false;
+          return parsed.getFullYear() === y && parsed.getMonth() === m;
+        });
+        const amountKrw = items.reduce((sum, tx) => sum + convertToKrw(tx.amount, tx.currency), 0);
+        const amount = krwToDisplayCurrency(amountKrw, settings.selectedCurrency);
+        return { category, amount, count: items.length };
+      })
+      .filter((row) => row.count > 0);
+  }, [transactions, settings.selectedCurrency]);
+
+  const totalAmount = useMemo(() => {
+    const now = new Date();
+    return krwToDisplayCurrency(
+      totalSpendingKrwForMonth(transactions, now.getFullYear(), now.getMonth()),
+      settings.selectedCurrency,
+    );
+  }, [transactions, settings.selectedCurrency]);
   const topCategory = summary.length > 0 ? summary.reduce((max, item) => (item.amount > max.amount ? item : max)) : null;
 
   return (
@@ -145,7 +147,7 @@ export default function HomeScreen() {
           <View className="rounded-3xl bg-gradient-to-br from-primary to-primary/80 p-6 shadow-lg">
             <Text className="text-sm text-white/80 font-medium mb-1">{isEn ? 'Total Spending (This Month)' : '총 지출 (이번 달)'}</Text>
             <Text className="text-4xl font-bold text-white">
-              {formatCurrencyAmount(totalAmount, settings.selectedCurrency)}
+              {formatRounded(totalAmount)} {settings.selectedCurrency}
             </Text>
             <Text className="text-xs text-white/70 mt-2">{settings.selectedCurrency} {isEn ? 'base' : '기준'}</Text>
           </View>
@@ -158,7 +160,7 @@ export default function HomeScreen() {
                   <Text className="text-sm text-muted font-medium mb-1">{isEn ? 'Top Spending Category' : '가장 많은 지출'}</Text>
                   <Text className="text-2xl font-bold text-foreground">{getCategoryLabel(topCategory.category.id, topCategory.category.label)}</Text>
                   <Text className="text-xs text-muted mt-1">
-                    {topCategory.count}{isEn ? ' tx' : '건'} · {formatCurrencyAmount(topCategory.amount, settings.selectedCurrency)} {settings.selectedCurrency}
+                    {topCategory.count}{isEn ? ' tx' : '건'} · {formatRounded(topCategory.amount)} {settings.selectedCurrency}
                   </Text>
                 </View>
                 <View className="w-12 h-12 rounded-2xl items-center justify-center" style={{ backgroundColor: topCategory.category.tone + '20' }}>
@@ -171,23 +173,12 @@ export default function HomeScreen() {
 
         {/* 빠른 작업 버튼 */}
         <View className="mb-6 gap-2">
-          <TouchableOpacity onPress={handleScanReceipt} className="rounded-2xl bg-primary/10 border border-primary/30 py-4 px-4 flex-row items-center justify-between active:opacity-70">
+        <TouchableOpacity onPress={handleAddNotification} className="rounded-2xl bg-primary/10 border border-primary/30 py-4 px-4 flex-row items-center justify-between active:opacity-70">
             <View className="flex-row items-center gap-3">
-              <Text className="text-2xl">📄</Text>
+              <Text className="text-2xl">📝</Text>
               <View>
-                <Text className="text-sm font-bold text-primary">{isEn ? 'Receipt Scan' : '영수증 스캔'}</Text>
-                <Text className="text-xs text-muted">{isEn ? 'Auto analyze multilingual receipts' : '다국 영수증 자동 분석'}</Text>
-              </View>
-            </View>
-            <Text className="text-primary text-lg">→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleAnalyzePrice} className="rounded-2xl bg-primary/10 border border-primary/30 py-4 px-4 flex-row items-center justify-between active:opacity-70">
-            <View className="flex-row items-center gap-3">
-              <Text className="text-2xl">🍽️</Text>
-              <View>
-                <Text className="text-sm font-bold text-primary">{isEn ? 'Price Analysis' : '가격 분석'}</Text>
-                <Text className="text-xs text-muted">{isEn ? 'Scan menu and compare averages' : '메뉴판 스캔 및 평균가 비교'}</Text>
+                <Text className="text-sm font-bold text-primary">{isEn ? 'Add Transaction' : '거래 추가'}</Text>
+                <Text className="text-xs text-muted">{isEn ? 'Paste notification text' : '알림 텍스트 붙여넣기'}</Text>
               </View>
             </View>
             <Text className="text-primary text-lg">→</Text>
@@ -204,28 +195,42 @@ export default function HomeScreen() {
             <Text className="text-primary text-lg">→</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleAddNotification} className="rounded-2xl bg-surface border border-border py-4 px-4 flex-row items-center justify-between active:opacity-70">
-            <View className="flex-row items-center gap-3">
-              <Text className="text-2xl">📝</Text>
-              <View>
-                <Text className="text-sm font-bold text-foreground">{isEn ? 'Add Transaction' : '거래 추가'}</Text>
-                <Text className="text-xs text-muted">{isEn ? 'Paste notification text' : '알림 텍스트 붙여넣기'}</Text>
-              </View>
-            </View>
-            <Text className="text-muted text-lg">→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleViewRules} className="rounded-2xl bg-surface border border-border py-4 px-4 flex-row items-center justify-between active:opacity-70">
+          <TouchableOpacity onPress={handleViewRules} className="rounded-2xl bg-primary/10 border border-primary/30 py-4 px-4 flex-row items-center justify-between active:opacity-70">
             <View className="flex-row items-center gap-3">
               <Text className="text-2xl">⚙️</Text>
               <View>
-                <Text className="text-sm font-bold text-foreground">{isEn ? 'Rules' : '분류 규칙'}</Text>
+                <Text className="text-sm font-bold text-primary">{isEn ? 'Rules' : '분류 규칙'}</Text>
                 <Text className="text-xs text-muted">{isEn ? 'Customize auto-categorization' : '자동 분류 커스터마이징'}</Text>
               </View>
             </View>
             <Text className="text-muted text-lg">→</Text>
           </TouchableOpacity>
+        
+
+          <TouchableOpacity onPress={handleScanReceipt} className="rounded-2xl bg-surface border border-border py-4 px-4 flex-row items-center justify-between active:opacity-70">
+            <View className="flex-row items-center gap-3">
+              <Text className="text-2xl">📄</Text>
+              <View>
+                <Text className="text-sm font-bold text-foreground">{isEn ? 'Receipt Scan' : '영수증 스캔'}</Text>
+                <Text className="text-xs text-muted">{isEn ? 'Auto analyze multilingual receipts' : '다국 영수증 자동 분석'}</Text>
+              </View>
+            </View>
+            <Text className="text-primary text-lg">→</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleAnalyzePrice} className="rounded-2xl bg-surface border border-border py-4 px-4 flex-row items-center justify-between active:opacity-70">
+            <View className="flex-row items-center gap-3">
+              <Text className="text-2xl">🍽️</Text>
+              <View>
+                <Text className="text-sm font-bold text-foreground">{isEn ? 'Price Analysis' : '가격 분석'}</Text>
+                <Text className="text-xs text-muted">{isEn ? 'Scan menu and compare averages' : '메뉴판 스캔 및 평균가 비교'}</Text>
+              </View>
+            </View>
+            <Text className="text-primary text-lg">→</Text>
+          </TouchableOpacity>
+
         </View>
+
 
         {/* 카테고리별 지출 현황 */}
         <View className="mb-6">
@@ -244,7 +249,7 @@ export default function HomeScreen() {
                       <Text className="text-sm font-medium text-foreground flex-1">{getCategoryLabel(item.category.id, item.category.label)}</Text>
                     </View>
                     <Text className="text-sm font-bold text-foreground">
-                      {formatCurrencyAmount(item.amount, settings.selectedCurrency)} {settings.selectedCurrency}
+                      {formatRounded(item.amount)} {settings.selectedCurrency}
                     </Text>
                   </View>
                   <View className="h-2 bg-border rounded-full overflow-hidden">
@@ -287,7 +292,7 @@ export default function HomeScreen() {
                   </View>
                   <View className="items-end">
                     <Text className="text-sm font-bold text-foreground">
-                      {formatCurrencyAmount(convertAmount(item.amount, item.currency, settings.selectedCurrency), settings.selectedCurrency)}
+                      {formatRounded(convertAmount(item.amount, item.currency, settings.selectedCurrency))}
                     </Text>
                     <Text className="text-xs text-muted mt-1">{settings.selectedCurrency}</Text>
                   </View>
