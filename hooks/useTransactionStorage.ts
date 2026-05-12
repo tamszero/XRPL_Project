@@ -13,6 +13,21 @@ export interface SavedTransaction {
 
 export const SAVED_TRANSACTIONS_STORAGE_KEY = "saved_transactions";
 
+export async function readPersistedTransactions(): Promise<SavedTransaction[]> {
+  try {
+    const stored = await AsyncStorage.getItem(SAVED_TRANSACTIONS_STORAGE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function writePersistedTransactions(rows: SavedTransaction[]): Promise<void> {
+  await AsyncStorage.setItem(SAVED_TRANSACTIONS_STORAGE_KEY, JSON.stringify(rows));
+}
+
 export function useTransactionStorage() {
   const [transactions, setTransactions] = useState<SavedTransaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,10 +39,8 @@ export function useTransactionStorage() {
 
   const loadTransactions = async () => {
     try {
-      const stored = await AsyncStorage.getItem(SAVED_TRANSACTIONS_STORAGE_KEY);
-      if (stored) {
-        setTransactions(JSON.parse(stored));
-      }
+      const list = await readPersistedTransactions();
+      setTransactions(list);
       setIsLoading(false);
     } catch (error) {
       console.error("거래 내역 로드 실패:", error);
@@ -49,9 +62,10 @@ export function useTransactionStorage() {
         notes,
       };
 
-      const updated = [newTransaction, ...transactions];
+      const existing = await readPersistedTransactions();
+      const updated = [newTransaction, ...existing];
       setTransactions(updated);
-      await AsyncStorage.setItem(SAVED_TRANSACTIONS_STORAGE_KEY, JSON.stringify(updated));
+      await writePersistedTransactions(updated);
 
       return newTransaction;
     } catch (error) {
@@ -65,11 +79,12 @@ export function useTransactionStorage() {
     xrplTxHash: string
   ) => {
     try {
-      const updated = transactions.map((tx) =>
+      const existing = await readPersistedTransactions();
+      const updated = existing.map((tx) =>
         tx.id === transactionId ? { ...tx, xrplTxHash } : tx
       );
       setTransactions(updated);
-      await AsyncStorage.setItem(SAVED_TRANSACTIONS_STORAGE_KEY, JSON.stringify(updated));
+      await writePersistedTransactions(updated);
     } catch (error) {
       console.error("XRPL 해시 업데이트 실패:", error);
       throw error;
@@ -78,9 +93,10 @@ export function useTransactionStorage() {
 
   const deleteTransaction = async (transactionId: string) => {
     try {
-      const updated = transactions.filter((tx) => tx.id !== transactionId);
+      const existing = await readPersistedTransactions();
+      const updated = existing.filter((tx) => tx.id !== transactionId);
       setTransactions(updated);
-      await AsyncStorage.setItem(SAVED_TRANSACTIONS_STORAGE_KEY, JSON.stringify(updated));
+      await writePersistedTransactions(updated);
     } catch (error) {
       console.error("거래 내역 삭제 실패:", error);
       throw error;

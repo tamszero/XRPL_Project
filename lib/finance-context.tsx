@@ -1,10 +1,14 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { SAVED_TRANSACTIONS_STORAGE_KEY, type SavedTransaction } from "@/hooks/useTransactionStorage";
+import {
+  readPersistedTransactions,
+  writePersistedTransactions,
+  type SavedTransaction,
+} from "@/hooks/useTransactionStorage";
 import {
   CategoryId,
   Transaction,
+  applyEditsToReceiptData,
   createTransaction,
   sampleTransactions,
   transactionFromSavedReceipt,
@@ -12,12 +16,21 @@ import {
 import { useRules } from "@/lib/rules-context";
 import type { ReceiptAnalysisResult } from "@/types";
 
+export type FinanceTransactionEdit = {
+  merchant?: string;
+  amount?: number;
+  currency?: string;
+  category?: CategoryId;
+  date?: string;
+};
+
 type FinanceContextValue = {
   transactions: Transaction[];
   addNotification: (text: string) => Transaction;
   updateCategory: (id: string, category: CategoryId) => void;
-  /** 영수증 탭에서 저장한 건을 홈·분석·리포트 집계에 반영 */
   addReceiptTransaction: (saved: SavedTransaction) => void;
+  updateTransaction: (id: string, fields: FinanceTransactionEdit) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
 };
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
@@ -36,9 +49,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(SAVED_TRANSACTIONS_STORAGE_KEY);
-        if (cancelled || !raw) return;
-        const parsed: SavedTransaction[] = JSON.parse(raw);
+        const parsed = await readPersistedTransactions();
+        if (cancelled) return;
         const seen = new Set<string>();
         const fromReceipts: Transaction[] = [];
         for (const tx of parsed) {
@@ -75,6 +87,67 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [rules],
   );
 
+  const updateTransaction = useCallback(
+    async (id: string, fields: FinanceTransactionEdit) => {
+      const tx = transactions.find((t) => t.id === id);
+      if (!tx) return;
+
+      if (tx.source === "receipt") {
+        const existing = await readPersistedTransactions();
+        const saved = existing.find((s) => s.id === id);
+        if (!saved || saved.type !== "receipt" || !isReceiptPayload(saved.data)) {
+          throw new Error("RECEIPT_NOT_IN_STORAGE");
+        }
+
+        const merchant = fields.merchant ?? tx.merchant;
+        const amountKrw = fields.amount !== undefined ? fields.amount : tx.amount;
+        const category = fields.category ?? tx.category;
+        const date = (fields.date ?? tx.date).slice(0, 10);
+
+        const newData = applyEditsToReceiptData(saved.data, merchant, amountKrw, category, date);
+        const nextList = existing.map((s) => (s.id === id ? { ...saved, data: newData } : s));
+        await writePersistedTransactions(nextList);
+
+        const newRow = transactionFromSavedReceipt(id, newData, saved.savedAt, rules);
+        setTransactions((prev) => prev.map((t) => (t.id === id ? newRow : t)));
+        return;
+      }
+
+      setTransactions((prev) =>
+        prev.map((t) => {
+          if (t.id !== id) return t;
+          const next: Transaction = {
+            ...t,
+            merchant: fields.merchant ?? t.merchant,
+            amount: fields.amount !== undefined ? fields.amount : t.amount,
+            currency: fields.currency ?? t.currency,
+            category: fields.category !== undefined ? fields.category : t.category,
+            date: (fields.date ?? t.date).slice(0, 10),
+            confidence: 1,
+          };
+          if (fields.merchant !== undefined || fields.amount !== undefined || fields.currency !== undefined) {
+            next.rawText = `${next.merchant} ${next.amount} ${next.currency}`;
+          }
+          return next;
+        }),
+      );
+    },
+    [transactions, rules],
+  );
+
+  const deleteTransaction = useCallback(async (id: string) => {
+    let wasReceipt = false;
+    setTransactions((prev) => {
+      const row = prev.find((t) => t.id === id);
+      wasReceipt = row?.source === "receipt";
+      return prev.filter((t) => t.id !== id);
+    });
+    if (wasReceipt) {
+      const existing = await readPersistedTransactions();
+      await writePersistedTransactions(existing.filter((t) => t.id !== id));
+    }
+  }, []);
+
   const value = useMemo<FinanceContextValue>(
     () => ({
       transactions,
@@ -87,8 +160,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         setTransactions((current) => current.map((item) => (item.id === id ? { ...item, category, confidence: 1 } : item)));
       },
       addReceiptTransaction,
+      updateTransaction,
+      deleteTransaction,
     }),
-    [transactions, rules, addReceiptTransaction],
+    [transactions, rules, addReceiptTransaction, updateTransaction, deleteTransaction],
   );
 
   return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;

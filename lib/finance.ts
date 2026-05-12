@@ -216,6 +216,42 @@ export function transactionFromSavedReceipt(
   };
 }
 
+/** records 화면 등에서 영수증 저장본을 수정할 때 사용 (원화 총액 기준으로 현지 금액·더치페이 재계산). */
+export function applyEditsToReceiptData(
+  prev: ReceiptAnalysisResult,
+  merchant: string,
+  totalKrw: number,
+  category: CategoryId,
+  date: string,
+): ReceiptAnalysisResult {
+  const currency = prev.currency;
+  const rate =
+    typeof prev.exchange_rate === "number" && prev.exchange_rate > 0
+      ? prev.exchange_rate
+      : COUNTRY_CONFIGS[currency]?.exchangeRate ?? 1300;
+  const numPeople = prev.dutch_pay?.num_people && prev.dutch_pay.num_people > 0 ? prev.dutch_pay.num_people : 1;
+  const totalKrwRounded = Math.round(Number.isFinite(totalKrw) ? totalKrw : 0);
+  const totalLocal =
+    currency === "KRW"
+      ? totalKrwRounded
+      : Math.round((totalKrwRounded / rate) * 100) / 100;
+  return {
+    ...prev,
+    merchant_name: merchant.trim() || prev.merchant_name,
+    total_krw: totalKrwRounded,
+    total_local: totalLocal,
+    currency,
+    exchange_rate: currency === "KRW" ? 1 : rate,
+    category,
+    date,
+    dutch_pay: {
+      num_people: numPeople,
+      per_person_krw: Math.round(totalKrwRounded / numPeople),
+      per_person_local: Math.round((totalLocal / numPeople) * 100) / 100,
+    },
+  };
+}
+
 export function createRule(name: string, category: CategoryId, pattern: string, matchType: 'keyword' | 'regex' = 'keyword', priority = 5): CategorizationRule {
   const id = `rule-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
   return {
