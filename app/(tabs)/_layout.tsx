@@ -45,6 +45,7 @@ export default function TabLayout() {
       <Tabs.Screen name="dutch-pay" options={{ href: null }} />
       <Tabs.Screen name="rules" options={{ href: null }} />
       <Tabs.Screen name="report" options={{ href: null }} />
+      <Tabs.Screen name="analytics" options={{ href: null }} />
     </Tabs>
   );
 }
