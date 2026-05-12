@@ -173,23 +173,12 @@ export default function HomeScreen() {
 
         {/* 빠른 작업 버튼 */}
         <View className="mb-6 gap-2">
-          <TouchableOpacity onPress={handleScanReceipt} className="rounded-2xl bg-primary/10 border border-primary/30 py-4 px-4 flex-row items-center justify-between active:opacity-70">
+        <TouchableOpacity onPress={handleAddNotification} className="rounded-2xl bg-primary/10 border border-primary/30 py-4 px-4 flex-row items-center justify-between active:opacity-70">
             <View className="flex-row items-center gap-3">
-              <Text className="text-2xl">📄</Text>
+              <Text className="text-2xl">📝</Text>
               <View>
-                <Text className="text-sm font-bold text-primary">{isEn ? 'Receipt Scan' : '영수증 스캔'}</Text>
-                <Text className="text-xs text-muted">{isEn ? 'Auto analyze multilingual receipts' : '다국 영수증 자동 분석'}</Text>
-              </View>
-            </View>
-            <Text className="text-primary text-lg">→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleAnalyzePrice} className="rounded-2xl bg-primary/10 border border-primary/30 py-4 px-4 flex-row items-center justify-between active:opacity-70">
-            <View className="flex-row items-center gap-3">
-              <Text className="text-2xl">🍽️</Text>
-              <View>
-                <Text className="text-sm font-bold text-primary">{isEn ? 'Price Analysis' : '가격 분석'}</Text>
-                <Text className="text-xs text-muted">{isEn ? 'Scan menu and compare averages' : '메뉴판 스캔 및 평균가 비교'}</Text>
+                <Text className="text-sm font-bold text-primary">{isEn ? 'Add Transaction' : '거래 추가'}</Text>
+                <Text className="text-xs text-muted">{isEn ? 'Paste notification text' : '알림 텍스트 붙여넣기'}</Text>
               </View>
             </View>
             <Text className="text-primary text-lg">→</Text>
@@ -206,28 +195,42 @@ export default function HomeScreen() {
             <Text className="text-primary text-lg">→</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleAddNotification} className="rounded-2xl bg-surface border border-border py-4 px-4 flex-row items-center justify-between active:opacity-70">
-            <View className="flex-row items-center gap-3">
-              <Text className="text-2xl">📝</Text>
-              <View>
-                <Text className="text-sm font-bold text-foreground">{isEn ? 'Add Transaction' : '거래 추가'}</Text>
-                <Text className="text-xs text-muted">{isEn ? 'Paste notification text' : '알림 텍스트 붙여넣기'}</Text>
-              </View>
-            </View>
-            <Text className="text-muted text-lg">→</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleViewRules} className="rounded-2xl bg-surface border border-border py-4 px-4 flex-row items-center justify-between active:opacity-70">
+          <TouchableOpacity onPress={handleViewRules} className="rounded-2xl bg-primary/10 border border-primary/30 py-4 px-4 flex-row items-center justify-between active:opacity-70">
             <View className="flex-row items-center gap-3">
               <Text className="text-2xl">⚙️</Text>
               <View>
-                <Text className="text-sm font-bold text-foreground">{isEn ? 'Rules' : '분류 규칙'}</Text>
+                <Text className="text-sm font-bold text-primary">{isEn ? 'Rules' : '분류 규칙'}</Text>
                 <Text className="text-xs text-muted">{isEn ? 'Customize auto-categorization' : '자동 분류 커스터마이징'}</Text>
               </View>
             </View>
             <Text className="text-muted text-lg">→</Text>
           </TouchableOpacity>
+        
+
+          <TouchableOpacity onPress={handleScanReceipt} className="rounded-2xl bg-surface border border-border py-4 px-4 flex-row items-center justify-between active:opacity-70">
+            <View className="flex-row items-center gap-3">
+              <Text className="text-2xl">📄</Text>
+              <View>
+                <Text className="text-sm font-bold text-foreground">{isEn ? 'Receipt Scan' : '영수증 스캔'}</Text>
+                <Text className="text-xs text-muted">{isEn ? 'Auto analyze multilingual receipts' : '다국 영수증 자동 분석'}</Text>
+              </View>
+            </View>
+            <Text className="text-primary text-lg">→</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleAnalyzePrice} className="rounded-2xl bg-surface border border-border py-4 px-4 flex-row items-center justify-between active:opacity-70">
+            <View className="flex-row items-center gap-3">
+              <Text className="text-2xl">🍽️</Text>
+              <View>
+                <Text className="text-sm font-bold text-foreground">{isEn ? 'Price Analysis' : '가격 분석'}</Text>
+                <Text className="text-xs text-muted">{isEn ? 'Scan menu and compare averages' : '메뉴판 스캔 및 평균가 비교'}</Text>
+              </View>
+            </View>
+            <Text className="text-primary text-lg">→</Text>
+          </TouchableOpacity>
+
         </View>
+
 
         {/* 카테고리별 지출 현황 */}
         <View className="mb-6">
