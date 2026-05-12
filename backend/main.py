@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -7,7 +10,10 @@ import base64
 import os
 from datetime import datetime
 
-from gemini_service import analyze_receipt, analyze_price_before_purchase
+# backend/.env 로드 (uvicorn 실행 위치와 무관하게 이 파일 기준)
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
+from service import analyze_receipt, analyze_price_before_purchase
 from xrpl_service import record_transaction_with_memo, get_transaction_info, get_account_balance, validate_wallet
 
 app = FastAPI(
