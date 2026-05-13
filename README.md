@@ -22,6 +22,18 @@ XRPL_Project2/
 
 ---
 
+## 팀원 및 역할
+
+| **이름** | **역할** | **담당 업무** | **Github** |
+| --- | --- | --- | --- |
+| **장예주** | project manager(PM)/ | 전체적인 기획 |
+| **백혜준** | project manager(PM) | 전체적인 기획 | 
+| **구지원** | Backend / Frontend | 전체적인 FE 기획 및 수정,   | 
+| **김유림** | Backend / Frontend | 리뷰 시스템(등록, 조회, 상세) 화면 구현 및 연동 | 
+| **지혜** | Backend / Frontend / XRPL | XRPL 지갑 생성 및 연결, 환전 기능 구현 |
+
+---
+
 ## 실행 전 준비
 
 ### 필수 설치
@@ -38,7 +50,7 @@ XRPL_Project2/
 
 ## 서버 실행 순서
 
-서버가 **3개** 있어. 전부 따로 터미널 열어서 실행해야 해.
+서버가 **3개** 있어. 전부 따로 터미널 열어서 실행
 
 도커(DB) + 서버 총 3개 실행 필요.
 전부 따로 터미널 열어서 실행
@@ -82,7 +94,7 @@ cp .env.example .env
 
 #### `.env` 파일 수정
 
-**.env 파일은 공유해드리는 파일을 받아 backend에 넣어주시면 됩니다. 아래 설명은 직접 seed, key 발급 시 참고용입니다.**
+**.env 파일은 공유해드리는 파일을 받아 backend에 넣기. 아래 설명은 직접 seed, key 발급 시 참고용입니다.**
 
 ```
 DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:15432/livingfund
@@ -96,8 +108,6 @@ XRPL_ISSUER_SEED=<팀원에게 받기>
 > ```bash
 > python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 > ```
-
-> XRPL_ISSUER_ADDRESS / XRPL_ISSUER_SEED 는 팀원 지희에게 받거나, `scripts/setup_issuer.py` 직접 실행해서 생성 가능
 
 #### 서버 실행
 
@@ -139,13 +149,9 @@ pnpm dev:metro     # Expo Metro 번들러 (포트 8081)
 http://192.168.x.x:8000
 ```
 
-> PC IP 확인 방법:
-> - Windows: `ipconfig` → IPv4 주소
-> - Mac/Linux: `ifconfig` → inet 주소
-
 ---
 
-## XRPL 초기 설정 (처음 한 번만 — 이미 완료됐으면 스킵)
+## XRPL 초기 설정 (처음 한 번만)
 
 이미 `XRPL_ISSUER_ADDRESS`와 `XRPL_ISSUER_SEED`를 팀원에게 받았다면 스킵해도 됨.
 
