@@ -1,6 +1,6 @@
 from xrpl.clients import JsonRpcClient
 from xrpl.models.transactions import Payment
-from xrpl.models.memos import Memo, MemoData
+from xrpl.models.transactions import Memo
 from xrpl.wallet import Wallet
 from xrpl.transaction import submit_and_wait
 import json
@@ -29,12 +29,12 @@ def record_transaction_with_memo(wallet_seed: Optional[str] = None, expense_data
                 "error": "Wallet seed not provided",
                 "tx_hash": None,
             }
-        
+ 
         wallet = Wallet.from_seed(wallet_seed)
-        
+ 
         if not expense_data:
             expense_data = {}
-        
+ 
         memo_data = {
             "type": "expense",
             "merchant": expense_data.get("merchant", "Unknown"),
@@ -45,17 +45,17 @@ def record_transaction_with_memo(wallet_seed: Optional[str] = None, expense_data
             "timestamp": datetime.utcnow().isoformat(),
             "app": "FinanceCompass",
         }
-        
+ 
         if "dutch_pay" in expense_data:
             memo_data["dutch_pay"] = expense_data["dutch_pay"]
-        
+ 
         memo_json = json.dumps(memo_data, ensure_ascii=False)
         memo_hex = memo_json.encode('utf-8').hex().upper()
-        
+ 
         memo = Memo(
             memo_data=MemoData(data=memo_hex)
         )
-        
+ 
         payment = Payment(
             account=wallet.address,
             destination=wallet.address,
@@ -64,9 +64,9 @@ def record_transaction_with_memo(wallet_seed: Optional[str] = None, expense_data
             sequence=None,
             fee="12",
         )
-        
+ 
         response = submit_and_wait(payment, client, wallet)
-        
+ 
         if response.result.get("meta", {}).get("TransactionResult") == "tesSUCCESS":
             return {
                 "success": True,
@@ -82,7 +82,7 @@ def record_transaction_with_memo(wallet_seed: Optional[str] = None, expense_data
                 "error": response.result.get("meta", {}).get("TransactionResult", "Unknown error"),
                 "tx_hash": None,
             }
-        
+ 
     except Exception as e:
         return {
             "success": False,
@@ -99,9 +99,9 @@ def get_transaction_info(tx_hash: str) -> Dict[str, Any]:
             "method": "tx",
             "transaction": tx_hash,
         })
-        
+ 
         result = response.result
-        
+ 
         memo_data = None
         if "Memos" in result and len(result["Memos"]) > 0:
             memo_hex = result["Memos"][0]["Memo"]["MemoData"]
@@ -109,7 +109,7 @@ def get_transaction_info(tx_hash: str) -> Dict[str, Any]:
                 memo_data = json.loads(bytes.fromhex(memo_hex).decode('utf-8'))
             except:
                 memo_data = {"raw": memo_hex}
-        
+ 
         return {
             "success": True,
             "tx_hash": tx_hash,
@@ -122,7 +122,7 @@ def get_transaction_info(tx_hash: str) -> Dict[str, Any]:
             "status": "confirmed" if result.get("meta", {}).get("TransactionResult") == "tesSUCCESS" else "failed",
             "memo_data": memo_data,
         }
-        
+ 
     except Exception as e:
         return {
             "success": False,
@@ -142,17 +142,17 @@ def get_account_balance(account_address: Optional[str] = None) -> Dict[str, Any]
                 "success": False,
                 "error": "Account address not provided",
             }
-        
+ 
         response = client.request({
             "method": "account_info",
             "account": account_address,
         })
-        
+ 
         result = response.result["account_data"]
-        
+ 
         balance_drops = result.get("Balance", 0)
         balance_xrp = int(balance_drops) / 1_000_000
-        
+ 
         return {
             "success": True,
             "account": account_address,
@@ -161,7 +161,7 @@ def get_account_balance(account_address: Optional[str] = None) -> Dict[str, Any]
             "flags": result.get("Flags"),
             "sequence": result.get("Sequence"),
         }
-        
+ 
     except Exception as e:
         return {
             "success": False,
