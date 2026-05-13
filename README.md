@@ -1,42 +1,50 @@
 # Finance Compass
 
+## 프로젝트 소개 (Project Overview)
 유학생 재정 관리 + XRPL 블록체인 기반 생활비 송금/환전 앱
 
----
-
-## 프로젝트 구조
-
-```
-XRPL_Project2/
-├── app/                  # React Native (Expo) 앱 화면
-├── server/               # tRPC 서버 (앱 자체 기능)
-├── backend/              # FastAPI 서버 (XRPL 지갑/환전)
-│   ├── app/              # 라우터, 모델, 서비스
-│   ├── requirements.txt
-│   └── .env.example
-├── scripts/              # XRPL 초기 설정 스크립트
-├── docker-compose.yml    # PostgreSQL DB
-└── lib/
-    └── livingFundApi.ts  # 앱 → FastAPI 연결 클라이언트
-```
+- 팀명: Xfer
 
 ---
 
-## 팀원 및 역할
+## 팀원 및 역할 (Team Members/Role)
 
-| **이름** | **역할** | **담당 업무** | **Github** |
+| **이름** | **역할** | **담당 업무** |
 | --- | --- | --- | --- |
 | **장예주** | project manager(PM)/ | 전체적인 기획 |
-| **백혜준** | project manager(PM) | 전체적인 기획 | 
-| **구지원** | Backend / Frontend | 전체적인 FE 기획 및 수정,   | 
-| **김유림** | Backend / Frontend | 리뷰 시스템(등록, 조회, 상세) 화면 구현 및 연동 | 
-| **지혜** | Backend / Frontend / XRPL | XRPL 지갑 생성 및 연결, 환전 기능 구현 |
+| **백혜준** | project manager(PM) | 전체적인 기획 및 데모영상 편집 | 
+| **구지원** | Backend / Frontend | 전체적인 FE 기획 및 수정   | 
+| **김유림** | Backend / Frontend | 전체적인 BE 기획 및 수정 | 
+| **한지혜** | Backend / Frontend / XRPL | XRPL 지갑 생성 및 연결, 환전 기능 구현 |
 
 ---
 
-## 실행 전 준비
+## 기술 스택 (Tech Stack)
 
-### 필수 설치
+**Frontend**
+
+- React Native (Expo) 앱
+- html + css + typescript
+
+**Backend**
+
+- FastAPI 서버 (Python)
+- PostgreSQL, SQLAlchemy 2.0
+
+**Database**
+
+- MySQL, PostgreSQL, Docker 
+
+**BlockChain & AI**
+
+- BlockChain: xrpl-py, Issuer 지갑
+- AI: Google Gemini
+
+---
+
+## 실행 전 준비 (Prerequisites / Requirements)
+
+### 필수 설치 (Installation)
 
 | 도구 | 버전 | 설치 |
 |------|------|------|
@@ -48,7 +56,7 @@ XRPL_Project2/
 
 ---
 
-## 서버 실행 순서
+## 서버 실행 순서 (Installation & Setup)
 
 서버가 **3개** 있어. 전부 따로 터미널 열어서 실행
 
@@ -109,7 +117,7 @@ XRPL_ISSUER_SEED=<팀원에게 받기>
 > python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
 > ```
 
-#### 서버 실행
+#### 서버 실행 (Running the App)
 
 ```bash
 # backend 폴더에서 (가상환경 활성화된 상태)
@@ -179,3 +187,23 @@ python add_liquidity.py
 | 2 | `cd backend && uvicorn app.main:app --reload --host 0.0.0.0` | 8000 |
 | 3 | `pnpm dev:server` | 3000/3001 |
 | 4 | `pnpm dev:metro` | 8081 |
+
+
+---
+
+## 아키텍처/폴더 구조 (Folder Structure)
+
+```
+XRPL_Project2/
+├── app/                  # React Native (Expo) 앱 화면
+├── server/               # tRPC 서버 (앱 자체 기능)
+├── backend/              # FastAPI 서버 (XRPL 지갑/환전)
+│   ├── app/              # 라우터, 모델, 서비스
+│   ├── requirements.txt
+│   └── .env.example
+├── scripts/              # XRPL 초기 설정 스크립트
+├── docker-compose.yml    # PostgreSQL DB
+└── lib/
+    └── livingFundApi.ts  # 앱 → FastAPI 연결 클라이언트
+```
+
