@@ -1,18 +1,25 @@
 # Finance Compass
+<img width="1582" height="888" alt="image" src="https://github.com/user-attachments/assets/ed2689f5-1204-4966-a811-cc2af479b874" />
 
 ## 프로젝트 소개 (Project Overview)
-유학생 재정 관리 + XRPL 블록체인 기반 생활비 송금/환전 앱
+유학생 재정 관리 + XRPL 블록체인 기반 생활비 송금/환전 앱으로 해외 유학생들이 겪는 생활비 관리의 비효율성과 증빙 문제를 해결하기 위한 프로젝트
 
-- 팀명: Xfer
+#### 주요 기능
+생활비 충전 (Funding) / 자동 환전 (Auto Exchange) / 다중통화 보관 (Multi-Currency Wallet) / 소비 데이터 기반 증빙 리포트 생성
 
+
+#### Why XRPL?
+XRPL은 빠른 정산과 다중통화 처리, 온체인 앵커링을 통해 금융 흐름을 위변조 불가능한 “검증 가능한 데이터”로 만드는 역할을 함
+
+- 팀명: Xfer(엑스퍼)
 ---
 
 ## 팀원 및 역할 (Team Members/Role)
 
 | **이름** | **역할** | **담당 업무** |
 | --- | --- | --- | 
-| **장예주** | project manager(PM)/ | 전체적인 기획 |
-| **백혜준** | project manager(PM) | 전체적인 기획 및 데모영상 편집 | 
+| **장예주** | PM (project manager) | 전체적인 기획 |
+| **백혜준** | PM (project manager) | 전체적인 기획 및 데모영상 편집 | 
 | **구지원** | Backend / Frontend | 전체적인 FE 기획 및 수정   | 
 | **김유림** | Backend / Frontend | 전체적인 BE 기획 및 수정 | 
 | **한지혜** | Backend / Frontend / XRPL | XRPL 지갑 생성 및 연결, 환전 기능 구현 |
@@ -58,7 +65,7 @@
 
 ## 서버 실행 순서 (Installation & Setup)
 
-서버가 **3개** 있어. 전부 따로 터미널 열어서 실행
+서버가 **3개** 전부 따로 터미널 열어서 실행
 
 도커(DB) + 서버 총 3개 실행 필요.
 전부 따로 터미널 열어서 실행
@@ -102,14 +109,16 @@ cp .env.example .env
 
 #### `.env` 파일 수정
 
-**.env 파일은 공유해드리는 파일을 받아 backend에 넣기. 아래 설명은 직접 seed, key 발급 시 참고용입니다.**
+**.env 파일은 공유해드리는 파일을 받아 backend에 넣기. 아래 설명은 직접 seed, key 발급 시 참고용임.**
 
 ```
-DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:15432/livingfund
+DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/livingfund
 XRPL_TESTNET_URL=https://s.altnet.rippletest.net:51234
 ENCRYPTION_KEY=<아래 명령어로 생성>
 XRPL_ISSUER_ADDRESS=<팀원에게 받기>
 XRPL_ISSUER_SEED=<팀원에게 받기>
+GEMINI_API_KEY=
+NGROK_TOKEN=
 ```
 
 > ENCRYPTION_KEY 생성 방법:
@@ -151,7 +160,7 @@ pnpm dev:metro     # Expo Metro 번들러 (포트 8081)
 
 폰과 PC가 **같은 Wi-Fi**에 연결되어 있어야 함.
 
-앱 실행 후 **설정 탭 → 백엔드 설정**에서 URL을 PC의 로컬 IP로 변경:
+앱 실행 후 **설정 탭 → 백엔드 설정**에서 URL을 PC의 로컬 IP로 변경
 
 ```
 http://192.168.x.x:8000
