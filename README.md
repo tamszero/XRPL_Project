@@ -109,7 +109,7 @@ cp .env.example .env
 
 #### `.env` 파일 수정
 
-**.env 파일은 공유해드리는 파일을 받아 backend에 넣기. 아래 설명은 직접 seed, key 발급 시 참고용임.**
+**.env 파일은 공유받은 파일을 받아 backend에 넣기. 아래 설명은 직접 seed, key 발급 시 참고용임.**
 
 ```
 DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/livingfund
