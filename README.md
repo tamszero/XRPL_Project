@@ -10,7 +10,7 @@
 ## 팀원 및 역할 (Team Members/Role)
 
 | **이름** | **역할** | **담당 업무** |
-| --- | --- | --- | --- |
+| --- | --- | --- | 
 | **장예주** | project manager(PM)/ | 전체적인 기획 |
 | **백혜준** | project manager(PM) | 전체적인 기획 및 데모영상 편집 | 
 | **구지원** | Backend / Frontend | 전체적인 FE 기획 및 수정   | 
